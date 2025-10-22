@@ -543,9 +543,51 @@ class PrayerTimesWindow(QMainWindow):
         font = QFont('Helvetica', font_size, QFont.Bold)
 
         #prayer times frame
+        
         times_frame = QFrame(central_widget)
         times_frame.setStyleSheet(f"background-color: {bg_color};")
-        times_frame.setGeometry(50, 80, 564, 900)
+
+        x_ratio = 0.0456
+        y_ratio = 0.125
+        w_ratio = 0.294
+        h_ratio = 0.741
+
+        left_shift_ratio = 0.01  #increase to move further left, decrease to move right
+        left_shift = int(width_value * left_shift_ratio)
+
+        times_frame.setGeometry(
+            int(width_value * x_ratio) - left_shift,
+            int(height_value * y_ratio),
+            int(width_value * w_ratio),
+            int(height_value * h_ratio)
+        )
+        times_frame.show()
+
+
+        #footer
+        
+        footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
+        footer_label.setFont(QFont('Veranda', 12))
+        footer_label.setAlignment(Qt.AlignCenter)
+        footer_label.setStyleSheet("background-color: #1a7689; color: white;")
+
+        footer_height = int(height_value * 0.04)
+        footer_margin = int(height_value * 0.013)
+        footer_label_width = int(times_frame.width())
+
+        horizontal_shift = int(width_value * -0.00) # decrease to move further left, increase to move right
+        footer_label_x = times_frame.x() + horizontal_shift 
+
+        footer_label.setGeometry(
+            footer_label_x,
+            times_frame.y() + times_frame.height() + footer_margin,
+            footer_label_width,
+            footer_height
+        )
+        footer_label.show()
+
+
+
         times_frame.setAttribute(Qt.WA_TranslucentBackground, False)
         times_frame.setAutoFillBackground(True)
         times_frame.setStyleSheet(f"background-color: {bg_color};")  
@@ -555,19 +597,6 @@ class PrayerTimesWindow(QMainWindow):
         times_frame.setAutoFillBackground(False)
         times_frame.setStyleSheet("background: transparent; border: none;")
 
-        #footer
-        
-        footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
-        footer_label.setFont(QFont('Veranda', 12))
-        footer_label.setAlignment(Qt.AlignCenter)
-        footer_label.setStyleSheet("background-color: #1a7689; color: white;")
-        footer_label.setGeometry(
-            times_frame.x() +17,
-            times_frame.y() + times_frame.height() + 10,  # small margin
-            times_frame.width(),
-            30
-        )
-        footer_label.show()
 
 
         #create labels
