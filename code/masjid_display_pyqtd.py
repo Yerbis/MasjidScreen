@@ -563,6 +563,8 @@ class PrayerTimesWindow(QMainWindow):
         )
         times_frame.show()
 
+        print("")
+
 
         #footer
         
