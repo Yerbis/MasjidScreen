@@ -569,7 +569,7 @@ class PrayerTimesWindow(QMainWindow):
         #footer
         
         footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
-        footer_label.setFont(QFont('Veranda', 12))
+        footer_label.setFont(QFont('Veranda'))
         footer_label.setAlignment(Qt.AlignCenter)
         footer_label.setStyleSheet("background-color: #1a7689; color: white;")
 
