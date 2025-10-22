@@ -545,7 +545,15 @@ class PrayerTimesWindow(QMainWindow):
         #prayer times frame
         times_frame = QFrame(central_widget)
         times_frame.setStyleSheet(f"background-color: {bg_color};")
-        times_frame.setGeometry(50, 80, 564, 900)
+        times_frame.setGeometry(
+            int(width_value * 0.1822916667 / 4), 
+            int(height_value * 0.5 / 4),          
+            int(width_value / 3.4),              
+            int(height_value / 1.35)              
+        )
+
+
+
         times_frame.setAttribute(Qt.WA_TranslucentBackground, False)
         times_frame.setAutoFillBackground(True)
         times_frame.setStyleSheet(f"background-color: {bg_color};")  
@@ -555,17 +563,23 @@ class PrayerTimesWindow(QMainWindow):
         times_frame.setAutoFillBackground(False)
         times_frame.setStyleSheet("background: transparent; border: none;")
 
-        #footer
         
+        
+        #footer
         footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
         footer_label.setFont(QFont('Veranda', 12))
         footer_label.setAlignment(Qt.AlignCenter)
         footer_label.setStyleSheet("background-color: #1a7689; color: white;")
+
+       
+        footer_margin = 10  
+        footer_height = 30
+
         footer_label.setGeometry(
-            times_frame.x() +17,
-            times_frame.y() + times_frame.height() + 10,  # small margin
-            times_frame.width(),
-            30
+            footer_margin,  # x: small margin from left
+            times_frame.y() + times_frame.height() + 10,  # just below times_frame
+            central_widget.width() - 2 * footer_margin,  # width: span almost full window
+            footer_height
         )
         footer_label.show()
 
@@ -754,6 +768,7 @@ class PrayerTimesWindow(QMainWindow):
         """key press handler"""
         if event.key() == Qt.Key_Escape:
             self.close()
+
     
     def display_time(self):
         """Main update loop"""
