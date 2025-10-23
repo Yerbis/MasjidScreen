@@ -295,17 +295,16 @@ def update_trivia(day, ramadan_labels, height_value, test=False):
 
 def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test):
     """Main program loop that updates times"""
-    current_time = tm.strftime('%B %#d %#I:%M:%S %p') # calculate current time
-    today = datetime.now().timetuple().tm_yday # calculate current day of the year
-    hour_time = tm.strftime('%H:%M') # calculate current hour
+    current_time = tm.strftime('%B %#d %#I:%M:%S %p', tm.localtime())
+    hour_time = tm.strftime('%H:%M', tm.localtime())
+    today = datetime.now().timetuple().tm_yday 
 
-    tomorrow = today + 1 # calculate tomorrow
-    today_schedule = data.loc[data["Day_of_year"] == today] # read df and assign the row of today to today_schedule
-    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] # read df and assign the row of tomorrow to tomorrow_schedule
+    tomorrow = today + 1 
+    today_schedule = data.loc[data["Day_of_year"] == today] 
+    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] 
     Fajr_Athan = today_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M') # assign data with column title Fajr_Athan to Fajr_Athan
     Fajr_Iqama = today_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
     Sunrise = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    # Sunrise_Iqama = (datetime.combine(dt.date.today(), today_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
     Thuhr_Athan = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
     Thuhr_Iqama = today_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
     Asr_Athan = today_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
@@ -325,7 +324,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     Fajr_Athan2 = tomorrow_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M')
     Fajr_Iqama2 = tomorrow_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
     Sunrise2 = tomorrow_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    # Sunrise_Iqama2 = (datetime.combine(dt.date.today(), tomorrow_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
     Thuhr_Athan2 = tomorrow_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
     Thuhr_Iqama2 = tomorrow_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
     Asr_Athan2 = tomorrow_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
@@ -340,7 +338,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     labels.today_fajr_athan_label ['text'] = Fajr_Athan #to assign Fajir_Athan to today_fajr_athan_label text
     labels.today_fajr_iqama_label ['text'] = Fajr_Iqama
     labels.today_shurooq_athan_label ['text'] = Sunrise
-    # today_shurooq_iqama_label ['text'] = Sunrise_Iqama
     labels.today_thuhr_athan_label ['text'] = Thuhr_Athan
     labels.today_thuhr_iqama_label ['text'] = Thuhr_Iqama
     labels.today_asr_athan_label ['text'] = Asr_Athan
@@ -363,12 +360,9 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     labels.tomorrow_isha_athan_label ['text'] = Ishaa_Athan2
     labels.tomorrow_isha_iqama_label ['text'] = Ishaa_Iqama2
 
-    next_prayer_color = rgb_to_hex((255, 0, 0))# to assign color to next prayer
-    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))# to assign color to next prayer
-    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0)) # to assign color to next prayer
-
-
-    # to highlight the next prayer time
+    next_prayer_color = rgb_to_hex((255, 0, 0))
+    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))
+    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0))
 
     if (":00" in hour_time):
         if (updated is False):
@@ -399,7 +393,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
 
         labels.today_shurooq_label['fg'] = next_prayer_color
         labels.today_shurooq_athan_label['fg'] = next_prayer_color
-        # today_shurooq_iqama_label['fg'] = next_prayer_color
 
     elif(hour_time >= sunrise_time and hour_time < thuhr_time):
         labels.today_fajr_label['fg'] = pre_prayer_color
@@ -408,8 +401,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
 
         labels.today_shurooq_label['fg'] = current_prayer_color
         labels.today_shurooq_athan_label['fg'] = current_prayer_color
-        # today_shurooq_iqama_label['fg'] = current_prayer_color
-
         labels.today_thuhr_label['fg'] = next_prayer_color
         labels.today_thuhr_athan_label['fg'] = next_prayer_color
         labels.today_thuhr_iqama_label['fg'] = next_prayer_color
@@ -466,14 +457,12 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
         labels.tomorrow_fajr_athan_label['fg'] = next_prayer_color
         labels.tomorrow_fajr_iqama_label['fg'] = next_prayer_color
 
-        # If Ramadan this is where winner update logic will occur
         if ramadan and not ramadan_updated and not test:
             update_trivia(trivia.get_trivia_day(), ramadan_labels, height_value)
             ramadan_updated = True
 
     labels.clock_label ['text'] = current_time # to assign current time to clock label
 
-    # to flash the different announcements every 30 sec
     global counter
     global i    
     
@@ -991,4 +980,3 @@ if __name__ == '__main__':
     
 
         
-
