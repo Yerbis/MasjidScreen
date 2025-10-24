@@ -578,43 +578,7 @@ class PrayerTimesWindow(QMainWindow):
 
         print("")
 
-
-        #footer
         
-        footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
-        footer_label.setFont(QFont('Veranda', 12))
-        footer_label.setAlignment(Qt.AlignCenter)
-        footer_label.setStyleSheet("background-color: #1a7689; color: white;")
-
-        footer_height = int(height_value * 0.04)
-        footer_margin = int(height_value * 0.013)
-        footer_label_width = int(times_frame.width())
-
-        horizontal_shift = int(width_value * -0.00) # decrease to move further left, increase to move right 
-        footer_label_x = times_frame.x() + horizontal_shift 
-
-        footer_label.setGeometry(
-            footer_label_x,
-            times_frame.y() + times_frame.height() + footer_margin,
-            footer_label_width,
-            footer_height
-        )
-        footer_label.show()
-
-        pri = 2 #filler variable
-
-
-
-        times_frame.setAttribute(Qt.WA_TranslucentBackground, False)
-        times_frame.setAutoFillBackground(True)
-        times_frame.setStyleSheet(f"background-color: {bg_color};")  
-
-        times_frame.setStyleSheet("background: transparent;")
-
-        times_frame.setAutoFillBackground(False)
-        times_frame.setStyleSheet("background: transparent; border: none;")
-
-
 
         #create labels
         self.labels = Labels(times_frame, bg_color, text_color, font, is_ramadan=self.args.r)
@@ -782,7 +746,7 @@ class PrayerTimesWindow(QMainWindow):
             winners_w_ratio = 0.15
             winners_h_ratio = 0.25
             winners_x_ratio = 0.446  # Moved left
-            winners_y_ratio = 0.13
+            winners_y_ratio = 0.134
             
             winners_frame.setGeometry(
                 int(width_value * winners_x_ratio),
@@ -1035,7 +999,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-
-        
-
