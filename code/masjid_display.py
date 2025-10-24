@@ -711,6 +711,8 @@ class PrayerTimesWindow(QMainWindow):
             questions_frame.setStyleSheet(f"background-color: {bg_color}; border: none;")
             questions_frame.setAutoFillBackground(True)
             
+            # No frame needed, QR code will be positioned directly
+            
             self.ramadan_labels = RamadanLabels(winners_frame, questions_frame, bg_color, text_color, font1, font2, font3)
             
             # winners layout
@@ -745,7 +747,7 @@ class PrayerTimesWindow(QMainWindow):
             
             winners_w_ratio = 0.15
             winners_h_ratio = 0.25
-            winners_x_ratio = 0.446  # Moved left
+            winners_x_ratio = 0.446
             winners_y_ratio = 0.134
             
             winners_frame.setGeometry(
@@ -755,11 +757,10 @@ class PrayerTimesWindow(QMainWindow):
                 int(height_value * winners_h_ratio)
             )
             
-           
             questions_w_ratio = 0.28
             questions_h_ratio = 0.20
-            questions_x_ratio = 0.555  # Moved slightly left
-            questions_y_ratio = 0.75   # Moved down more
+            questions_x_ratio = 0.555
+            questions_y_ratio = 0.75
             
             questions_frame.setGeometry(
                 int(width_value * questions_x_ratio),
@@ -768,21 +769,28 @@ class PrayerTimesWindow(QMainWindow):
                 int(height_value * questions_h_ratio)
             )
             
+                        
             winners_frame.show()
             questions_frame.show()
             
-            # qr code with dynamic positioning
-            qr_x_ratio = 0.4739583333
-            qr_y_ratio = 0.4592013889
+            update_trivia(day - 1, self.ramadan_labels, height_value, test=self.args.t)
+            
+            # Position QR code directly without frame - CENTERED ON SCREEN
+            qr_size = int(height_value * 0.1851851852)
+            pixmap = QPixmap('trivia.png')
+            pixmap = pixmap.scaled(qr_size, qr_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             
             self.ramadan_labels.trivia_qr.setParent(central_widget)
-            self.ramadan_labels.trivia_qr.move(
-                int(width_value * qr_x_ratio), 
-                int(height_value * qr_y_ratio)
+            self.ramadan_labels.trivia_qr.setPixmap(pixmap)
+            self.ramadan_labels.trivia_qr.setStyleSheet("background: transparent; border: none;")
+            self.ramadan_labels.trivia_qr.setGeometry(
+                int(width_value / 2 - qr_size / 2)+50,  # Center horizontally
+                int(height_value / 2 - qr_size / 2)+54,  # Center vertically
+                qr_size,
+                qr_size
             )
             self.ramadan_labels.trivia_qr.show()
             
-            update_trivia(day - 1, self.ramadan_labels, height_value, test=self.args.t)
         else:
             self.ramadan_labels = None
         
