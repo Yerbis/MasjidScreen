@@ -46,11 +46,13 @@ global ramadan_updated
 
 class Labels:
     """Class to store prayer time labels for cleaner code"""
-    def __init__(self, parent, bg_color, text_color, font):
+    def __init__(self, parent, bg_color, text_color, font, is_ramadan=False):
 
         def make_label(parent, text="", bg_color=bg_color, text_color=text_color, font=font):
             label = QLabel(text, parent)
-            label.setStyleSheet(f"background-color: transparent; color: {text_color}; border: none;")
+            # Force white text in ramadan mode
+            final_color = "white" if is_ramadan else text_color
+            label.setStyleSheet(f"background-color: transparent; color: {final_color}; border: none;")
             if font:
                 label.setFont(font)
             label.setAlignment(Qt.AlignCenter)
@@ -60,12 +62,16 @@ class Labels:
 
         # Main clock and date labels
         self.clock_label = make_label(parent)
+        # Force clock to be white in ramadan mode
+        if is_ramadan:
+            self.clock_label.setStyleSheet("background: transparent; color: white;")
+        else:
+            self.clock_label.setStyleSheet("background: transparent;")
+
         self.today_date_label = make_label(parent)
         self.today_space_label = make_label(parent, "")
         self.athan_label = make_label(parent, "Athan")
         self.iqama_label = make_label(parent, "Iqama")
-
-        self.clock_label.setStyleSheet("background: transparent;")
 
         # Today's prayer names
         self.today_fajr_label = make_label(parent, "Fajr")
@@ -121,53 +127,71 @@ class RamadanLabels:
             
             # winner frame
             self.winner_one_first = QLabel(winner_parent)
-            self.winner_one_first.setStyleSheet(f"background-color: {bg_color}: color: {text_color}")
+            self.winner_one_first.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_one_first.setFont(font1)
+            self.winner_one_first.setAlignment(Qt.AlignCenter)
 
             self.winner_one_last = QLabel(winner_parent)
             self.winner_one_last.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_one_last.setFont(font1)
+            self.winner_one_last.setAlignment(Qt.AlignCenter)
             
             self.winner_two_first = QLabel(winner_parent)
             self.winner_two_first.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_two_first.setFont(font1)
+            self.winner_two_first.setAlignment(Qt.AlignCenter)
             
             self.winner_two_last = QLabel(winner_parent)
             self.winner_two_last.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_two_last.setFont(font1)
+            self.winner_two_last.setAlignment(Qt.AlignCenter)
 
             self.winner_three_first = QLabel(winner_parent)
             self.winner_three_first.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_three_first.setFont(font1)
+            self.winner_three_first.setAlignment(Qt.AlignCenter)
             
             self.winner_three_last = QLabel(winner_parent)
             self.winner_three_last.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.winner_three_last.setFont(font1)
+            self.winner_three_last.setAlignment(Qt.AlignCenter)
 
             # question frame
             self.question_one = QLabel(question_parent)
             self.question_one.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_one.setFont(font2)
+            self.question_one.setAlignment(Qt.AlignCenter)
+            self.question_one.setWordWrap(True)
             
             self.question_one_options = QLabel(question_parent)
             self.question_one_options.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_one_options.setFont(font3)
+            self.question_one_options.setAlignment(Qt.AlignCenter)
+            self.question_one_options.setWordWrap(True)
             
             self.question_two = QLabel(question_parent)
             self.question_two.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_two.setFont(font2)
+            self.question_two.setAlignment(Qt.AlignCenter)
+            self.question_two.setWordWrap(True)
             
             self.question_two_options = QLabel(question_parent)
             self.question_two_options.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_two_options.setFont(font3)
+            self.question_two_options.setAlignment(Qt.AlignCenter)
+            self.question_two_options.setWordWrap(True)
 
             self.question_three = QLabel(question_parent)
             self.question_three.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_three.setFont(font2)
+            self.question_three.setAlignment(Qt.AlignCenter)
+            self.question_three.setWordWrap(True)
             
             self.question_three_options = QLabel(question_parent)
             self.question_three_options.setStyleSheet(f"background-color: {bg_color}; color: {text_color};")
             self.question_three_options.setFont(font3)
+            self.question_three_options.setAlignment(Qt.AlignCenter)
+            self.question_three_options.setWordWrap(True)
 
             # qr code
             self.trivia_qr = QLabel("")
@@ -205,11 +229,10 @@ def update_photos(height_value):
     
     print("]")
 
-    # reading and loading the photos
-
+    # reading and loading the photos with high quality scaling
     for file in photo_list:
         load = QPixmap(file)
-        load1 = load.scaled(height_value,height_value, Qt.KeepAspectRatio) 
+        load1 = load.scaled(height_value, height_value, Qt.KeepAspectRatio, Qt.SmoothTransformation) 
         photos.append(load1)
 
     print(f"Photos updated from \"{os.path.abspath(main_folder)}\" at {tm.strftime('%#m/%#d/%Y %#I:%M:%S %p')} \n")
@@ -295,17 +318,16 @@ def update_trivia(day, ramadan_labels, height_value, test=False):
 
 def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test):
     """Main program loop that updates times"""
-    current_time = tm.strftime('%B %#d %#I:%M:%S %p') # calculate current time
-    today = datetime.now().timetuple().tm_yday # calculate current day of the year
-    hour_time = tm.strftime('%H:%M') # calculate current hour
+    current_time = tm.strftime('%B %#d %#I:%M:%S %p', tm.localtime())
+    hour_time = tm.strftime('%H:%M', tm.localtime())
+    today = datetime.now().timetuple().tm_yday 
 
-    tomorrow = today + 1 # calculate tomorrow
-    today_schedule = data.loc[data["Day_of_year"] == today] # read df and assign the row of today to today_schedule
-    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] # read df and assign the row of tomorrow to tomorrow_schedule
+    tomorrow = today + 1 
+    today_schedule = data.loc[data["Day_of_year"] == today] 
+    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] 
     Fajr_Athan = today_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M') # assign data with column title Fajr_Athan to Fajr_Athan
     Fajr_Iqama = today_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
     Sunrise = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    # Sunrise_Iqama = (datetime.combine(dt.date.today(), today_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
     Thuhr_Athan = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
     Thuhr_Iqama = today_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
     Asr_Athan = today_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
@@ -325,7 +347,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     Fajr_Athan2 = tomorrow_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M')
     Fajr_Iqama2 = tomorrow_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
     Sunrise2 = tomorrow_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    # Sunrise_Iqama2 = (datetime.combine(dt.date.today(), tomorrow_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
     Thuhr_Athan2 = tomorrow_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
     Thuhr_Iqama2 = tomorrow_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
     Asr_Athan2 = tomorrow_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
@@ -340,7 +361,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     labels.today_fajr_athan_label ['text'] = Fajr_Athan #to assign Fajir_Athan to today_fajr_athan_label text
     labels.today_fajr_iqama_label ['text'] = Fajr_Iqama
     labels.today_shurooq_athan_label ['text'] = Sunrise
-    # today_shurooq_iqama_label ['text'] = Sunrise_Iqama
     labels.today_thuhr_athan_label ['text'] = Thuhr_Athan
     labels.today_thuhr_iqama_label ['text'] = Thuhr_Iqama
     labels.today_asr_athan_label ['text'] = Asr_Athan
@@ -363,12 +383,9 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
     labels.tomorrow_isha_athan_label ['text'] = Ishaa_Athan2
     labels.tomorrow_isha_iqama_label ['text'] = Ishaa_Iqama2
 
-    next_prayer_color = rgb_to_hex((255, 0, 0))# to assign color to next prayer
-    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))# to assign color to next prayer
-    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0)) # to assign color to next prayer
-
-
-    # to highlight the next prayer time
+    next_prayer_color = rgb_to_hex((255, 0, 0))
+    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))
+    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0))
 
     if (":00" in hour_time):
         if (updated is False):
@@ -399,7 +416,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
 
         labels.today_shurooq_label['fg'] = next_prayer_color
         labels.today_shurooq_athan_label['fg'] = next_prayer_color
-        # today_shurooq_iqama_label['fg'] = next_prayer_color
 
     elif(hour_time >= sunrise_time and hour_time < thuhr_time):
         labels.today_fajr_label['fg'] = pre_prayer_color
@@ -408,8 +424,6 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
 
         labels.today_shurooq_label['fg'] = current_prayer_color
         labels.today_shurooq_athan_label['fg'] = current_prayer_color
-        # today_shurooq_iqama_label['fg'] = current_prayer_color
-
         labels.today_thuhr_label['fg'] = next_prayer_color
         labels.today_thuhr_athan_label['fg'] = next_prayer_color
         labels.today_thuhr_iqama_label['fg'] = next_prayer_color
@@ -466,14 +480,12 @@ def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_heig
         labels.tomorrow_fajr_athan_label['fg'] = next_prayer_color
         labels.tomorrow_fajr_iqama_label['fg'] = next_prayer_color
 
-        # If Ramadan this is where winner update logic will occur
         if ramadan and not ramadan_updated and not test:
             update_trivia(trivia.get_trivia_day(), ramadan_labels, height_value)
             ramadan_updated = True
 
     labels.clock_label ['text'] = current_time # to assign current time to clock label
 
-    # to flash the different announcements every 30 sec
     global counter
     global i    
     
@@ -533,7 +545,7 @@ class PrayerTimesWindow(QMainWindow):
         bg_image = bg_image.scaled(width_value, height_value, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
         bg_label.setPixmap(bg_image)
         bg_label.setGeometry(0, 0, width_value, height_value)
-        bg_label.setStyleSheet("background-color: black;")  # fills any subpixel edge
+        bg_label.setStyleSheet("background-color: black;")
         bg_label.setAlignment(Qt.AlignCenter)
 
         #colors, fonts
@@ -545,14 +557,15 @@ class PrayerTimesWindow(QMainWindow):
         #prayer times frame
         
         times_frame = QFrame(central_widget)
-        times_frame.setStyleSheet(f"background-color: {bg_color};")
+        times_frame.setStyleSheet(f"background-color: {bg_color}; border: none;")
+        times_frame.setAutoFillBackground(True)
 
         x_ratio = 0.0456
         y_ratio = 0.125
         w_ratio = 0.294
         h_ratio = 0.741
 
-        left_shift_ratio = 0.01  #increase to move further left, decrease to move right
+        left_shift_ratio = 0.01
         left_shift = int(width_value * left_shift_ratio)
 
         times_frame.setGeometry(
@@ -565,46 +578,10 @@ class PrayerTimesWindow(QMainWindow):
 
         print("")
 
-
-        #footer
         
-        footer_label = QLabel("Created & Updated by Yusuf Darwish, IKworks team ©2025", central_widget)
-        footer_label.setFont(QFont('Veranda', 12))
-        footer_label.setAlignment(Qt.AlignCenter)
-        footer_label.setStyleSheet("background-color: #1a7689; color: white;")
-
-        footer_height = int(height_value * 0.04)
-        footer_margin = int(height_value * 0.013)
-        footer_label_width = int(times_frame.width())
-
-        horizontal_shift = int(width_value * -0.00) # decrease to move further left, increase to move right 
-        footer_label_x = times_frame.x() + horizontal_shift 
-
-        footer_label.setGeometry(
-            footer_label_x,
-            times_frame.y() + times_frame.height() + footer_margin,
-            footer_label_width,
-            footer_height
-        )
-        footer_label.show()
-
-        pri = 2 #filler variable
-
-
-
-        times_frame.setAttribute(Qt.WA_TranslucentBackground, False)
-        times_frame.setAutoFillBackground(True)
-        times_frame.setStyleSheet(f"background-color: {bg_color};")  
-
-        times_frame.setStyleSheet("background: transparent;")
-
-        times_frame.setAutoFillBackground(False)
-        times_frame.setStyleSheet("background: transparent; border: none;")
-
-
 
         #create labels
-        self.labels = Labels(times_frame, bg_color, text_color, font)
+        self.labels = Labels(times_frame, bg_color, text_color, font, is_ramadan=self.args.r)
 
         grid = QGridLayout(times_frame)
         grid.setContentsMargins(10, 10, 10, 10)
@@ -658,7 +635,7 @@ class PrayerTimesWindow(QMainWindow):
         social_link = self.config["socials"]
         donate_link = self.config["donate"]
         website_link = self.config["website"]
-        ikcode_link = self.config["ikworks"]
+
 
         trivia.make_qr_with_link(social_link, "socials.png")
         trivia.make_qr_with_link(donate_link, "donate.png")
@@ -667,7 +644,7 @@ class PrayerTimesWindow(QMainWindow):
         qr_size = int(0.1157407407 * height_value)
 
         social_label = QLabel(central_widget)
-        socials_image = QPixmap('socials.png').scaled(qr_size, qr_size, Qt.KeepAspectRatio)
+        socials_image = QPixmap('socials.png').scaled(qr_size, qr_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         social_label.setPixmap(socials_image)
         social_label.setGeometry(int(width_value * 0.3828125) - qr_size//2, 
                                   int(height_value * 0.2844907407) - qr_size//2, 
@@ -697,7 +674,7 @@ class PrayerTimesWindow(QMainWindow):
             self.flyer.setIcon(QIcon(photos[0]))
             self.flyer.setIconSize(QSize(flyer_height, flyer_height))
         self.flyer.setFlat(True)
-        self.flyer.setStyleSheet("border: none;")
+        self.flyer.setStyleSheet("border: none; background: transparent;")
 
         if self.args.t:
             global testDay
@@ -718,17 +695,25 @@ class PrayerTimesWindow(QMainWindow):
             
             day = trivia.get_trivia_day()
             
-            winners_frame = QWidget(central_widget)
+            # Winners frame with fixed size and position
+            winners_frame = QFrame(central_widget)
             winners_layout = QVBoxLayout(winners_frame)
-            winners_frame.setStyleSheet(f"background-color: {bg_color};")
+            winners_layout.setContentsMargins(10, 10, 10, 10)
+            winners_layout.setSpacing(5)
+            winners_frame.setStyleSheet(f"background-color: {bg_color}; border: none;")
+            winners_frame.setAutoFillBackground(True)
             
-            questions_frame = QWidget(central_widget)
+            # Questions frame with fixed size and position
+            questions_frame = QFrame(central_widget)
             questions_layout = QVBoxLayout(questions_frame)
-            questions_frame.setStyleSheet(f"background-color: {bg_color};")
+            questions_layout.setContentsMargins(15, 15, 15, 15)
+            questions_layout.setSpacing(5)
+            questions_frame.setStyleSheet(f"background-color: {bg_color}; border: none;")
+            questions_frame.setAutoFillBackground(True)
             
             self.ramadan_labels = RamadanLabels(winners_frame, questions_frame, bg_color, text_color, font1, font2, font3)
             
-            # winners
+            # winners layout
             winners_layout.addWidget(self.ramadan_labels.winner_one_first)
             winners_layout.addWidget(self.ramadan_labels.winner_one_last)
             space1 = QLabel("")
@@ -741,8 +726,9 @@ class PrayerTimesWindow(QMainWindow):
             winners_layout.addWidget(space2)
             winners_layout.addWidget(self.ramadan_labels.winner_three_first)
             winners_layout.addWidget(self.ramadan_labels.winner_three_last)
+            winners_layout.addStretch()
             
-            # questions
+            # questions layout
             questions_layout.addWidget(self.ramadan_labels.question_one)
             questions_layout.addWidget(self.ramadan_labels.question_one_options)
             space3 = QLabel("")
@@ -755,25 +741,52 @@ class PrayerTimesWindow(QMainWindow):
             questions_layout.addWidget(space4)
             questions_layout.addWidget(self.ramadan_labels.question_three)
             questions_layout.addWidget(self.ramadan_labels.question_three_options)
+            questions_layout.addStretch()
             
-            # frames
-            winners_frame.move(int(width_value * 0.5260416667) - winners_frame.width()//2, 
-                              int(height_value * 0.279) - winners_frame.height()//2)
-            questions_frame.move(int(width_value * 0.71875) - questions_frame.width()//2, 
-                                int(height_value * 0.8425925926) - questions_frame.height()//2)
+            winners_w_ratio = 0.15
+            winners_h_ratio = 0.25
+            winners_x_ratio = 0.446  # Moved left
+            winners_y_ratio = 0.13
             
-            # qr code
+            winners_frame.setGeometry(
+                int(width_value * winners_x_ratio),
+                int(height_value * winners_y_ratio),
+                int(width_value * winners_w_ratio),
+                int(height_value * winners_h_ratio)
+            )
+            
+           
+            questions_w_ratio = 0.28
+            questions_h_ratio = 0.20
+            questions_x_ratio = 0.555  # Moved slightly left
+            questions_y_ratio = 0.75   # Moved down more
+            
+            questions_frame.setGeometry(
+                int(width_value * questions_x_ratio),
+                int(height_value * questions_y_ratio),
+                int(width_value * questions_w_ratio),
+                int(height_value * questions_h_ratio)
+            )
+            
+            winners_frame.show()
+            questions_frame.show()
+            
+            # qr code with dynamic positioning
+            qr_x_ratio = 0.4739583333
+            qr_y_ratio = 0.4592013889
+            
             self.ramadan_labels.trivia_qr.setParent(central_widget)
-            self.ramadan_labels.trivia_qr.move(int(width_value * 0.4739583333), 
-                                               int(height_value * 0.4592013889))
+            self.ramadan_labels.trivia_qr.move(
+                int(width_value * qr_x_ratio), 
+                int(height_value * qr_y_ratio)
+            )
+            self.ramadan_labels.trivia_qr.show()
             
             update_trivia(day - 1, self.ramadan_labels, height_value, test=self.args.t)
         else:
             self.ramadan_labels = None
         
         self.showFullScreen()
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setStyleSheet("background-color: transparent;")
 
     
     def test_handler(self):
@@ -865,6 +878,20 @@ class PrayerTimesWindow(QMainWindow):
         pre_prayer_color = rgb_to_hex((255, 255, 255)) if self.args.r else rgb_to_hex((0, 0, 0))
         current_prayer_color = rgb_to_hex((0, 200, 0)) if self.args.r else rgb_to_hex((0, 50, 0))
         
+        # Reset all colors to default first
+        all_prayer_labels = [
+            (self.labels.today_fajr_label, self.labels.today_fajr_athan_label, self.labels.today_fajr_iqama_label),
+            (self.labels.today_shurooq_label, self.labels.today_shurooq_athan_label, self.labels.today_shurooq_iqama_label),
+            (self.labels.today_thuhr_label, self.labels.today_thuhr_athan_label, self.labels.today_thuhr_iqama_label),
+            (self.labels.today_asr_label, self.labels.today_asr_athan_label, self.labels.today_asr_iqama_label),
+            (self.labels.today_maghrib_label, self.labels.today_maghrib_athan_label, self.labels.today_maghrib_iqama_label),
+            (self.labels.today_isha_label, self.labels.today_isha_athan_label, self.labels.today_isha_iqama_label),
+            (self.labels.tomorrow_fajr_label, self.labels.tomorrow_fajr_athan_label, self.labels.tomorrow_fajr_iqama_label),
+        ]
+        
+        for prayer_name, athan, iqama in all_prayer_labels:
+            self.set_prayer_colors(prayer_name, athan, iqama, pre_prayer_color)
+        
         # Update photo hourly
         if ":00" in hour_time:
             if not self.updated:
@@ -875,13 +902,9 @@ class PrayerTimesWindow(QMainWindow):
         else:
             self.updated = False
         
-        # Prayer time highlighting logic
+        # Prayer time highlighting logic - now colors entire row
         if hour_time < fajr_time:
             self.ramadan_updated = False
-            self.set_prayer_colors(self.labels.today_isha_label, self.labels.today_isha_athan_label, 
-                                  self.labels.today_isha_iqama_label, pre_prayer_color)
-            self.set_prayer_colors(self.labels.tomorrow_fajr_label, self.labels.tomorrow_fajr_athan_label, 
-                                  self.labels.tomorrow_fajr_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_fajr_label, self.labels.today_fajr_athan_label, 
                                   self.labels.today_fajr_iqama_label, next_prayer_color)
         
@@ -889,43 +912,33 @@ class PrayerTimesWindow(QMainWindow):
             self.set_prayer_colors(self.labels.today_fajr_label, self.labels.today_fajr_athan_label, 
                                   self.labels.today_fajr_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.today_shurooq_label, self.labels.today_shurooq_athan_label, 
-                                  None, next_prayer_color)
+                                  self.labels.today_shurooq_iqama_label, next_prayer_color)
         
         elif hour_time >= sunrise_time and hour_time < thuhr_time:
-            self.set_prayer_colors(self.labels.today_fajr_label, self.labels.today_fajr_athan_label, 
-                                  self.labels.today_fajr_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_shurooq_label, self.labels.today_shurooq_athan_label, 
-                                  None, current_prayer_color)
+                                  self.labels.today_shurooq_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.today_thuhr_label, self.labels.today_thuhr_athan_label, 
                                   self.labels.today_thuhr_iqama_label, next_prayer_color)
         
         elif hour_time >= thuhr_time and hour_time < asr_time:
-            self.set_prayer_colors(self.labels.today_shurooq_label, self.labels.today_shurooq_athan_label, 
-                                  self.labels.today_shurooq_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_thuhr_label, self.labels.today_thuhr_athan_label, 
                                   self.labels.today_thuhr_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.today_asr_label, self.labels.today_asr_athan_label, 
                                   self.labels.today_asr_iqama_label, next_prayer_color)
         
         elif hour_time >= asr_time and hour_time < maghrib_time:
-            self.set_prayer_colors(self.labels.today_thuhr_label, self.labels.today_thuhr_athan_label, 
-                                  self.labels.today_thuhr_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_asr_label, self.labels.today_asr_athan_label, 
                                   self.labels.today_asr_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.today_maghrib_label, self.labels.today_maghrib_athan_label, 
                                   self.labels.today_maghrib_iqama_label, next_prayer_color)
         
         elif hour_time >= maghrib_time and hour_time < isha_time:
-            self.set_prayer_colors(self.labels.today_asr_label, self.labels.today_asr_athan_label, 
-                                  self.labels.today_asr_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_maghrib_label, self.labels.today_maghrib_athan_label, 
                                   self.labels.today_maghrib_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.today_isha_label, self.labels.today_isha_athan_label, 
                                   self.labels.today_isha_iqama_label, next_prayer_color)
         
         elif hour_time >= isha_time:
-            self.set_prayer_colors(self.labels.today_maghrib_label, self.labels.today_maghrib_athan_label, 
-                                  self.labels.today_maghrib_iqama_label, pre_prayer_color)
             self.set_prayer_colors(self.labels.today_isha_label, self.labels.today_isha_athan_label, 
                                   self.labels.today_isha_iqama_label, current_prayer_color)
             self.set_prayer_colors(self.labels.tomorrow_fajr_label, self.labels.tomorrow_fajr_athan_label, 
@@ -953,13 +966,11 @@ class PrayerTimesWindow(QMainWindow):
             self.flyer.setIcon(icon)
     
     def set_prayer_colors(self, label, athan_label, iqama_label, color):
-        """set prayer label colors"""
-        style = label.styleSheet()
-        new_style = style.split(';')[0]+f': color: {color};'
-        label.setStyleSheet(new_style)
-        athan_label.setStyleSheet(athan_label.styleSheet().split(';')[0]+f': color: {color};')
+        """set prayer label colors for entire row"""
+        label.setStyleSheet(f"background-color: transparent; color: {color}; border: none;")
+        athan_label.setStyleSheet(f"background-color: transparent; color: {color}; border: none;")
         if iqama_label:
-            iqama_label.setStyleSheet(iqama_label.styleSheet().split(';')[0] + f'; color: {color};')
+            iqama_label.setStyleSheet(f"background-color: transparent; color: {color}; border: none;")
 
 def main():
     """run prayer screen"""
@@ -988,7 +999,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-
-        
-
