@@ -5,6 +5,8 @@ Updated by Yusuf Darwish, designed by Mahdi Elghazali and Omar Nassar
 
 @author: Mahdi Elghazali and Omar Nassar
 
+Comments added
+
 Converted from Tkinter to Pyqt5"""
 
 import sys
