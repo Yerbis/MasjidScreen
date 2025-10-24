@@ -1,11 +1,9 @@
 """
 Started Oct 20 2025 @14:40
 
-Updated by Yusuf Darwish, designed by Mahdi Elghazali and Omar Nassar
+Created by Yusuf Darwish, designed by Mahdi Elghazali and Omar Nassar
 
 @author: Mahdi Elghazali and Omar Nassar
-
-Comments added
 
 Converted from Tkinter to Pyqt5"""
 
