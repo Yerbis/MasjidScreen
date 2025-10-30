@@ -1,34 +1,29 @@
 """
-Started Oct 20 2025 @14:40
+Created on Tue Apr  6 15:09:56 2021
 
-Created by Yusuf Darwish, designed by Mahdi Elghazali and Omar Nassar
+@author: Mahdi Elghazali, Omar Nassar, and Yusuf Darwish
+"""
 
-@author: Mahdi Elghazali and Omar Nassar
-
-Converted from Tkinter to Pyqt5"""
-
-import sys
-import os
 import time as tm
 from datetime import datetime
 import pandas as pd
+import os
 import argparse
-import json
+import trivia
 import textwrap
+import json
+from stats import printAllStats
+import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel, QWidget, 
                               QPushButton, QFrame, QVBoxLayout, QHBoxLayout, 
                               QGridLayout)
 from PyQt5.QtCore import QTimer, Qt, QSize
-from PyQt5.QtGui import QPixmap, QFont, QColor, QIcon
-import trivia
-from stats import printAllStats
+from PyQt5.QtGui import QPixmap, QFont, QColor, QIcon, QFontDatabase
 
 # declare and set the main directory for use in file
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-config_path = os.path.join(BASE_DIR, '..', 'config.json') 
+CONFIG_PATH = os.path.join(BASE_DIR, '..', 'config.json') 
 
 photos = [] # array to store the list of the resized photos 
 tq_image = [] # workaround to store trivia qr code and update during run time
@@ -109,7 +104,7 @@ class Labels:
         self.tomorrow_fajr_athan_label = make_label(parent)
         self.tomorrow_fajr_iqama_label = make_label(parent)
         self.tomorrow_shurooq_athan_label = make_label(parent)
-        self.tomorrow_shurooq_iqama_label = make_label(parent, "")
+        # self.tomorrow_shurooq_iqama_label = make_label(parent, "")
         self.tomorrow_thuhr_athan_label = make_label(parent)
         self.tomorrow_thuhr_iqama_label = make_label(parent)
         self.tomorrow_asr_athan_label = make_label(parent)
@@ -196,314 +191,6 @@ class RamadanLabels:
             # qr code
             self.trivia_qr = QLabel("")
 
-def rgb_to_hex(rgb):
-      """convert rgb to hex"""
-      r, g, b = rgb
-      return f'#{r:02x}{g:02x}{b:02x}'
-
-def update_photos(height_value):
-    """Update flyer photos label"""
-    with open(config_path, "r") as file:
-        config = json.load(file)
-    
-    main_folder = config["flyers"]
-    if not os.path.exists(main_folder):
-         main_folder = os.path.join(os.path.dirname(__file__), "..", "sample ads")
-         main_folder = os.path.abspath(main_folder)
-    
-    photo_path = os.listdir(main_folder)
-    photo_list = []
-    photos.clear()
-
-    print("\n[", end="")
-
-    #assigning whole path to photo list
-
-    for file in photo_path:
-        if file.endswith("png") or file.endswith("jpg") or file.endswith("jpeg"):
-            new_file = os.path.join(main_folder, file)
-            photo_list.append(new_file)
-            print(f"'{file}", end=", " if file != photo_path[-1] else "")
-        else:
-            photo_path.remove(file)
-    
-    print("]")
-
-    # reading and loading the photos with high quality scaling
-    for file in photo_list:
-        load = QPixmap(file)
-        load1 = load.scaled(height_value, height_value, Qt.KeepAspectRatio, Qt.SmoothTransformation) 
-        photos.append(load1)
-
-    print(f"Photos updated from \"{os.path.abspath(main_folder)}\" at {tm.strftime('%#m/%#d/%Y %#I:%M:%S %p')} \n")
-
-
-def update_trivia(day, ramadan_labels, height_value, test=False):
-    """Updating trivia questions and winners"""
-    print(f"Day {day} of Ramadan")
-
-    if (day < 0 or day > 30):
-        trivia.make_qr_with_link("icc-hillsboro.org", 'trivia.png')
-        ramadan_labels.question_one.setText('')
-        ramadan_labels.question_one_options.setText('')
-
-        if day > 0:
-            ramadan_labels.question_two.setText("Thank you for participating!")
-            ramadan_labels.question_two_options.setText("We hope you join us again next year inshaAllah!")
-        else:
-            ramadan_labels.question_two.setText("Ramadan is starting soon!")
-            ramadan_labels.question_two_options.setText("We hope you join us for trivia this year inshaAllah!")
-
-        ramadan_labels.question_three.setText('')
-        ramadan_labels.question_three_options.setText('')
-
-        ramadan_labels.winner_one_first.setText("")
-        ramadan_labels.winner_one_last.setText("")
-        ramadan_labels.winner_two_first.setText("")
-        ramadan_labels.winner_two_last.setText("")
-        ramadan_labels.winner_three_first.setText("")
-        ramadan_labels.winner_three_last.setText("")
-    else:
-        trivia.make_qr(day)
-        question, option1, option2, option3 = trivia.get_form_questions_options(day)
-        ramadan_labels.question_one.setText('\n'.join(textwrap.wrap(question[0], width=95)))
-        ramadan_labels.question_one_options.setText(f"a) {option1[0]}  b) {option2[0]}  c) {option3[0]}")
-        ramadan_labels.question_two.setText('\n'.join(textwrap.wrap(question[1], width=95)))
-        ramadan_labels.question_two_options.setText(f"a) {option1[1]}  b) {option2[1]}  c) {option3[1]}")
-        ramadan_labels.question_three.setText('\n'.join(textwrap.wrap(question[2], width=95)))
-        ramadan_labels.question_three_options.setText(f"a) {option1[2]}  b) {option2[2]}  c) {option3[2]}")
-
-    if day <= 31:
-        if not trivia.check_winners_updated(str(day - 1)):
-            winners = trivia.get_winners(day - 1)
-            trivia.log_winners(str(day - 1), winners, test)
-        else:
-            winners = trivia.get_past_winners(str(day - 1))
-        winners = [sublist[:1] for sublist in winners]
-        print(f"Winners: {winners}")
-
-        if winners:
-            if len(winners) >= 1:
-                ramadan_labels.winner_one_first.setText(winners[0][0].split(" ")[0].capitalize())
-                ramadan_labels.winner_one_last.setText(winners[0][0].split(" ")[-1].capitalize())
-                ramadan_labels.winner_two_first.setText("")
-                ramadan_labels.winner_two_last.setText("")
-                ramadan_labels.winner_three_first.setText("")
-                ramadan_labels.winner_three_last.setText("")
-
-            if len(winners) >= 2:
-                ramadan_labels.winner_two_first.setText(winners[1][0].split(" ")[0].capitalize())
-                ramadan_labels.winner_two_last.setText(winners[1][0].split(" ")[-1].capitalize())
-
-            if len(winners) >= 3:
-                ramadan_labels.winner_three_first.setText(winners[2][0].split(" ")[0].capitalize())
-                ramadan_labels.winner_three_last.setText(winners[2][0].split(" ")[-1].capitalize())
-        else:
-            ramadan_labels.winner_one_first.setText("No Winners")
-            ramadan_labels.winner_one_last.setText("Yesterday")
-            ramadan_labels.winner_two_first.setText("")
-            ramadan_labels.winner_two_last.setText("")
-            ramadan_labels.winner_three_first.setText("")
-            ramadan_labels.winner_three_last.setText("")
-
-    pixmap = QPixmap('trivia.png')
-    pixmap = pixmap.scaled(int(height_value * 0.1851851852), int(height_value * 0.1851851852), 
-                           Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    tq_image.clear()
-    tq_image.append(pixmap)
-    ramadan_labels.trivia_qr.setPixmap(tq_image[0])
-    print("\nStats so far:")
-    printAllStats()
-    print()
-
-def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test):
-    """Main program loop that updates times"""
-    current_time = tm.strftime('%B %#d %#I:%M:%S %p', tm.localtime())
-    hour_time = tm.strftime('%H:%M', tm.localtime())
-    today = datetime.now().timetuple().tm_yday 
-
-    tomorrow = today + 1 
-    today_schedule = data.loc[data["Day_of_year"] == today] 
-    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] 
-    Fajr_Athan = today_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M') # assign data with column title Fajr_Athan to Fajr_Athan
-    Fajr_Iqama = today_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
-    Sunrise = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    Thuhr_Athan = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
-    Thuhr_Iqama = today_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
-    Asr_Athan = today_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
-    Asr_Iqama = today_schedule.iloc[0]["Asr_Iqama"].strftime('%#I:%M')
-    Maghrib_Athan = today_schedule.iloc[0]["Maghrib_Athan"].strftime('%#I:%M')
-    Maghrib_Iqama = today_schedule.iloc[0]["Maghrib_Iqama"].strftime('%#I:%M')
-    Ishaa_Athan = today_schedule.iloc[0]["Ishaa_Athan"].strftime('%#I:%M')
-    Ishaa_Iqama = today_schedule.iloc[0]["Ishaa_Iqama"].strftime('%#I:%M')
-
-    fajr_time = today_schedule.iloc[0]["Fajr_Athan"].strftime('%H:%M')
-    sunrise_time = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%H:%M')
-    thuhr_time = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%H:%M')
-    asr_time = today_schedule.iloc[0]["Asr_Athan"].strftime('%H:%M')
-    maghrib_time = today_schedule.iloc[0]["Maghrib_Athan"].strftime('%H:%M')
-    isha_time = today_schedule.iloc[0]["Ishaa_Athan"].strftime('%H:%M')
-
-    Fajr_Athan2 = tomorrow_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M')
-    Fajr_Iqama2 = tomorrow_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
-    Sunrise2 = tomorrow_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
-    Thuhr_Athan2 = tomorrow_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
-    Thuhr_Iqama2 = tomorrow_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
-    Asr_Athan2 = tomorrow_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
-    Asr_Iqama2 = tomorrow_schedule.iloc[0]["Asr_Iqama"].strftime('%#I:%M')
-    Maghrib_Athan2 = tomorrow_schedule.iloc[0]["Maghrib_Athan"].strftime('%#I:%M')
-    Maghrib_Iqama2 = tomorrow_schedule.iloc[0]["Maghrib_Iqama"].strftime('%#I:%M')
-    Ishaa_Athan2 = tomorrow_schedule.iloc[0]["Ishaa_Athan"].strftime('%#I:%M')
-    Ishaa_Iqama2 = tomorrow_schedule.iloc[0]["Ishaa_Iqama"].strftime('%#I:%M')
-
-    labels.today_date_label['text'] = today_schedule.iloc[0]["Day"] # to assign today in excel file to today_date_label text
-    labels.tomorrow_date_label['text'] = tomorrow_schedule.iloc[0]["Day"] #to assign today+1 in excel file to tomorrow_date_label text
-    labels.today_fajr_athan_label ['text'] = Fajr_Athan #to assign Fajir_Athan to today_fajr_athan_label text
-    labels.today_fajr_iqama_label ['text'] = Fajr_Iqama
-    labels.today_shurooq_athan_label ['text'] = Sunrise
-    labels.today_thuhr_athan_label ['text'] = Thuhr_Athan
-    labels.today_thuhr_iqama_label ['text'] = Thuhr_Iqama
-    labels.today_asr_athan_label ['text'] = Asr_Athan
-    labels.today_asr_iqama_label ['text'] = Asr_Iqama
-    labels.today_maghrib_athan_label ['text'] = Maghrib_Athan
-    labels.today_maghrib_iqama_label ['text'] = Maghrib_Iqama
-    labels.today_isha_athan_label ['text'] = Ishaa_Athan
-    labels.today_isha_iqama_label ['text'] = Ishaa_Iqama
-
-    labels.tomorrow_fajr_athan_label ['text'] = Fajr_Athan2
-    labels.tomorrow_fajr_iqama_label ['text'] = Fajr_Iqama2
-    labels.tomorrow_shurooq_athan_label ['text'] = Sunrise2
-    # tomorrow_shurooq_iqama_label ['text'] = Sunrise_Iqama2
-    labels.tomorrow_thuhr_athan_label ['text'] = Thuhr_Athan2
-    labels.tomorrow_thuhr_iqama_label ['text'] = Thuhr_Iqama2
-    labels.tomorrow_asr_athan_label ['text'] = Asr_Athan2
-    labels.tomorrow_asr_iqama_label ['text'] = Asr_Iqama2
-    labels.tomorrow_maghrib_athan_label ['text'] = Maghrib_Athan2
-    labels.tomorrow_maghrib_iqama_label ['text'] = Maghrib_Iqama2
-    labels.tomorrow_isha_athan_label ['text'] = Ishaa_Athan2
-    labels.tomorrow_isha_iqama_label ['text'] = Ishaa_Iqama2
-
-    next_prayer_color = rgb_to_hex((255, 0, 0))
-    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))
-    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0))
-
-    if (":00" in hour_time):
-        if (updated is False):
-            update_photos(flyer_height)
-            updated = True
-    else:
-        updated = False
-
-    if(hour_time < fajr_time):
-        ramadan_updated = False
-
-        labels.today_isha_label['fg'] = pre_prayer_color
-        labels.today_isha_athan_label['fg'] = pre_prayer_color
-        labels.today_isha_iqama_label['fg'] = pre_prayer_color
-
-        labels.tomorrow_fajr_label['fg'] = pre_prayer_color
-        labels.tomorrow_fajr_athan_label['fg'] = pre_prayer_color
-        labels.tomorrow_fajr_iqama_label['fg'] = pre_prayer_color
-
-        labels.today_fajr_label['fg'] = next_prayer_color
-        labels.today_fajr_athan_label['fg'] = next_prayer_color
-        labels.today_fajr_iqama_label['fg'] = next_prayer_color
-
-    elif(hour_time >= fajr_time and hour_time < sunrise_time):
-        labels.today_fajr_label['fg'] = current_prayer_color
-        labels.today_fajr_athan_label['fg'] = current_prayer_color
-        labels.today_fajr_iqama_label['fg'] = current_prayer_color
-
-        labels.today_shurooq_label['fg'] = next_prayer_color
-        labels.today_shurooq_athan_label['fg'] = next_prayer_color
-
-    elif(hour_time >= sunrise_time and hour_time < thuhr_time):
-        labels.today_fajr_label['fg'] = pre_prayer_color
-        labels.today_fajr_athan_label['fg'] = pre_prayer_color
-        labels.today_fajr_iqama_label['fg'] = pre_prayer_color
-
-        labels.today_shurooq_label['fg'] = current_prayer_color
-        labels.today_shurooq_athan_label['fg'] = current_prayer_color
-        labels.today_thuhr_label['fg'] = next_prayer_color
-        labels.today_thuhr_athan_label['fg'] = next_prayer_color
-        labels.today_thuhr_iqama_label['fg'] = next_prayer_color
-
-    elif(hour_time >= thuhr_time and hour_time < asr_time):
-        labels.today_shurooq_label['fg'] = pre_prayer_color
-        labels.today_shurooq_athan_label['fg'] = pre_prayer_color
-        labels.today_shurooq_iqama_label['fg'] = pre_prayer_color
-        
-        labels.today_thuhr_label['fg'] = current_prayer_color
-        labels.today_thuhr_athan_label['fg'] = current_prayer_color
-        labels.today_thuhr_iqama_label['fg'] = current_prayer_color
-
-        labels.today_asr_label['fg'] = next_prayer_color
-        labels.today_asr_athan_label['fg'] = next_prayer_color
-        labels.today_asr_iqama_label['fg'] = next_prayer_color
-        
-    elif(hour_time >= asr_time and hour_time < maghrib_time):
-        labels.today_thuhr_label['fg'] = pre_prayer_color
-        labels.today_thuhr_athan_label['fg'] = pre_prayer_color
-        labels.today_thuhr_iqama_label['fg'] = pre_prayer_color
-        
-        labels.today_asr_label['fg'] = current_prayer_color
-        labels.today_asr_athan_label['fg'] = current_prayer_color
-        labels.today_asr_iqama_label['fg'] = current_prayer_color
-
-        labels.today_maghrib_label['fg'] = next_prayer_color
-        labels.today_maghrib_athan_label['fg'] = next_prayer_color
-        labels.today_maghrib_iqama_label['fg'] = next_prayer_color
-
-    elif(hour_time >= maghrib_time and hour_time < isha_time):
-        labels.today_asr_label['fg'] = pre_prayer_color
-        labels.today_asr_athan_label['fg'] = pre_prayer_color
-        labels.today_asr_iqama_label['fg'] = pre_prayer_color
-        
-        labels.today_maghrib_label['fg'] = current_prayer_color
-        labels.today_maghrib_athan_label['fg'] = current_prayer_color
-        labels.today_maghrib_iqama_label['fg'] = current_prayer_color
-
-        labels.today_isha_label['fg'] = next_prayer_color
-        labels.today_isha_athan_label['fg'] = next_prayer_color
-        labels.today_isha_iqama_label['fg'] = next_prayer_color
-        
-    elif(hour_time >= isha_time):
-        labels.today_maghrib_label['fg'] = pre_prayer_color
-        labels.today_maghrib_athan_label['fg'] = pre_prayer_color
-        labels.today_maghrib_iqama_label['fg'] = pre_prayer_color
-
-        labels.today_isha_label['fg'] = current_prayer_color
-        labels.today_isha_athan_label['fg'] = current_prayer_color
-        labels.today_isha_iqama_label['fg'] = current_prayer_color
-
-        labels.tomorrow_fajr_label['fg'] = next_prayer_color
-        labels.tomorrow_fajr_athan_label['fg'] = next_prayer_color
-        labels.tomorrow_fajr_iqama_label['fg'] = next_prayer_color
-
-        if ramadan and not ramadan_updated and not test:
-            update_trivia(trivia.get_trivia_day(), ramadan_labels, height_value)
-            ramadan_updated = True
-
-    labels.clock_label ['text'] = current_time # to assign current time to clock label
-
-    global counter
-    global i    
-    
-    if (i >= len(photos) - 1):
-        i = 0
-
-    if(counter <Time and i< len(photos)):
-        flyer_photo_now = photos[i]
-        counter += 1
-    else:
-        flyer_photo_now = photos[i]
-        counter = 0
-        i+=1
-    
-    flyer['image'] = flyer_photo_now
-    
-    labels.clock_label.after(1000,display_time, labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test) # rerun display_time() after 1sec
-
 class PrayerTimesWindow(QMainWindow):
     def __init__(self, args, config, data):
         super().__init__()
@@ -560,8 +247,8 @@ class PrayerTimesWindow(QMainWindow):
         times_frame.setStyleSheet(f"background-color: {bg_color}; border: none;")
         times_frame.setAutoFillBackground(True)
 
-        x_ratio = 0.0456
-        y_ratio = 0.125
+        x_ratio = 0.0400
+        y_ratio = 0.05
         w_ratio = 0.294
         h_ratio = 0.741
 
@@ -578,7 +265,76 @@ class PrayerTimesWindow(QMainWindow):
 
         print("")
 
+        font_file = "quran_font.ttf"
+        font_path = os.path.join(BASE_DIR, "..", "resources", font_file)
+
+        # Load the font
+        font_id = QFontDatabase.addApplicationFont(font_path)
+
+        if font_id == -1:
+            print(f"❌ Failed to load font at {font_path}")
+        else:
+            loaded_fonts = QFontDatabase.applicationFontFamilies(font_id)
+            if loaded_fonts:
+                font_family = loaded_fonts[0]
+                print(f"✅ Loaded font family: {font_family}")
+
+        ayah_frame = QFrame(central_widget)
+        ayah_frame.setStyleSheet(f"background-color: transparent; border: none;")
+        ayah_frame.setAutoFillBackground(True)
+        ayah_frame.setAttribute(Qt.WA_TranslucentBackground, True)
         
+        ayah_x = int(width_value * x_ratio) - left_shift
+        ayah_y = int(height_value * y_ratio) + int(height_value * h_ratio) + 47
+        ayah_w = int(width_value * w_ratio)
+        ayah_h = int(height_value * 0.17)  
+        
+        ayah_frame.setGeometry(ayah_x, ayah_y, ayah_w, ayah_h)
+        ayah_frame.show()
+        
+        #get todays ayah
+        daily_ayah = self.get_daily_ayah()
+        
+        #create ayah labels
+        ayah_layout = QVBoxLayout(ayah_frame)
+        ayah_layout.setContentsMargins(15, 15, 15, 15)
+        ayah_layout.setSpacing(10)
+        
+        #ayah (arabic)
+        arabic_font_size = round(25 * (height_value / 1080))
+
+        arabic_font = QFont(font_family, arabic_font_size)
+        arabic_font.setBold(True)
+
+        self.ayah_arabic = QLabel(daily_ayah['arabic'], ayah_frame)
+        self.ayah_arabic.setStyleSheet(f"background-color: transparent; color: {text_color}; border: none;")
+        self.ayah_arabic.setFont(arabic_font)
+        self.ayah_arabic.setAlignment(Qt.AlignCenter)
+        self.ayah_arabic.setWordWrap(True)
+
+        
+        #translation
+        translation_font = QFont('Helvetica', round(13 * (height_value/1080)))
+        self.ayah_translation = QLabel(daily_ayah['translation'], ayah_frame)
+        self.ayah_translation.setStyleSheet(f"background-color: transparent; color: {text_color}; border: none;")
+        self.ayah_translation.setFont(translation_font)
+        self.ayah_translation.setAlignment(Qt.AlignCenter)
+        self.ayah_translation.setWordWrap(True)
+        
+        #reference
+        reference_font = QFont('Helvetica', round(12 * (height_value/1080)), QFont.StyleItalic)
+        self.ayah_reference = QLabel(daily_ayah['reference'], ayah_frame)
+        self.ayah_reference.setStyleSheet(f"background-color: transparent; color: {text_color}; border: none;")
+        self.ayah_reference.setFont(reference_font)
+        self.ayah_reference.setAlignment(Qt.AlignCenter)
+        
+        ayah_layout.addWidget(self.ayah_arabic)
+        ayah_layout.addWidget(self.ayah_translation)
+        ayah_layout.addWidget(self.ayah_reference)
+        ayah_layout.addStretch()
+        
+        #store ayah 
+        self.current_ayah_day = datetime.now().timetuple().tm_yday
 
         #create labels
         self.labels = Labels(times_frame, bg_color, text_color, font, is_ramadan=self.args.r)
@@ -820,6 +576,16 @@ class PrayerTimesWindow(QMainWindow):
         tomorrow = today + 1
         today_schedule = self.data.loc[self.data["Day_of_year"] == today]
         tomorrow_schedule = self.data.loc[self.data["Day_of_year"] == tomorrow]
+
+         # Update ayah daily
+        current_day = datetime.now().timetuple().tm_yday
+        if current_day != self.current_ayah_day:
+            daily_ayah = self.get_daily_ayah()
+            self.ayah_arabic.setText(daily_ayah['arabic'])
+            self.ayah_translation.setText(daily_ayah['translation'])
+            self.ayah_reference.setText(daily_ayah['reference'])
+            self.current_ayah_day = current_day
+            print(f"Ayah updated for day {current_day}")
         
         # Extract today's times
         Fajr_Athan = today_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M')
@@ -980,6 +746,353 @@ class PrayerTimesWindow(QMainWindow):
         if iqama_label:
             iqama_label.setStyleSheet(f"background-color: transparent; color: {color}; border: none;")
 
+    def get_daily_ayah(self):
+        """Get daily ayah"""
+        ayahs_path = os.path.join(BASE_DIR, '..', 'ayahs.json')
+
+        try:
+            with open(ayahs_path, 'r', encoding='utf-8') as f:
+                ayahs_data = json.load(f)
+                ayahs = ayahs_data['ayahs']
+
+            # Use day of year to get days
+
+            day_of_year = datetime.now().timetuple().tm_yday
+            ayah_index = day_of_year % len(ayahs)
+
+            return ayahs[ayah_index]
+        except FileNotFoundError:
+            return {
+                "arabic": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+                "translation": "In the name of Allah, the Most Gracious, the Most Merciful.",
+                "reference": "Al-Fatihah 1:1"
+            }
+        except Exception as e:
+            print(f"Error loading ayahs: {e}")
+            return {
+                "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                "translation": "In the name of Allah, the Most Gracious, the Most Merciful.",
+                "reference": "Al-Fatihah 1:1"
+            }
+
+
+def rgb_to_hex(rgb):
+      """convert rgb to hex"""
+      r, g, b = rgb
+      return f'#{r:02x}{g:02x}{b:02x}'
+
+def update_photos(height_value):
+    """Update flyer photos label"""
+    with open(CONFIG_PATH, "r") as file:
+        config = json.load(file)
+    
+    main_folder = config["flyers"]
+    if not os.path.exists(main_folder):
+         main_folder = os.path.abspath(os.path.join(BASE_DIR, "..", "sample ads"))
+    
+    photo_path = os.listdir(main_folder) # array to store the path of the photos 
+    photo_list = [] # array to store the list of the photos 
+    photos.clear()
+
+    print("\n[", end="")
+
+    # assigning the whole path to the photo list
+    for file in photo_path:
+        if file.endswith(".png") or file.endswith(".jpg") or file.endswith(".jpeg"):
+            new_file = os.path.join(main_folder, file)
+            photo_list.append(new_file)
+            print(f"'{file}'", end=", " if file != photo_path[-1] else "")
+        else:
+            photo_path.remove(file)
+    print("]")
+
+    # reading and loading the photos with high quality scaling
+    for file in photo_list:
+        load = QPixmap(file)
+        load1 = load.scaled(height_value, height_value, Qt.KeepAspectRatio, Qt.SmoothTransformation) 
+        photos.append(load1)
+
+    print(f"Photos updated from \"{os.path.abspath(main_folder)}\" at {tm.strftime('%#m/%#d/%Y %#I:%M:%S %p')} \n")
+
+
+def update_trivia(day, ramadan_labels, height_value, test=False):
+    """Updating trivia questions and winners as well as logging, sending emails, and generating QR code"""
+    print(f"Day {day} of Ramadan")
+
+    if (day < 0 or day > 30):
+        winners = None
+        trivia.make_qr_with_link("icc-hillsboro.org", 'trivia.png')
+        ramadan_labels.question_one.setText('')
+        ramadan_labels.question_one_options.setText('')
+
+        if day > 0:
+            ramadan_labels.question_two.setText("Thank you for participating!")
+            ramadan_labels.question_two_options.setText("We hope you join us again next year inshaAllah!")
+        else:
+            ramadan_labels.question_two.setText("Ramadan is starting soon!")
+            ramadan_labels.question_two_options.setText("We hope you join us for trivia this year inshaAllah!")
+
+        ramadan_labels.question_three.setText('')
+        ramadan_labels.question_three_options.setText('')
+
+        ramadan_labels.winner_one_first.setText("")
+        ramadan_labels.winner_one_last.setText("")
+        ramadan_labels.winner_two_first.setText("")
+        ramadan_labels.winner_two_last.setText("")
+        ramadan_labels.winner_three_first.setText("")
+        ramadan_labels.winner_three_last.setText("")
+    else:
+        trivia.make_qr(day)
+        question, option1, option2, option3 = trivia.get_form_questions_options(day)
+        ramadan_labels.question_one.setText('\n'.join(textwrap.wrap(question[0], width=95)))
+        ramadan_labels.question_one_options.setText(f"a) {option1[0]}  b) {option2[0]}  c) {option3[0]}")
+        ramadan_labels.question_two.setText('\n'.join(textwrap.wrap(question[1], width=95)))
+        ramadan_labels.question_two_options.setText(f"a) {option1[1]}  b) {option2[1]}  c) {option3[1]}")
+        ramadan_labels.question_three.setText('\n'.join(textwrap.wrap(question[2], width=95)))
+        ramadan_labels.question_three_options.setText(f"a) {option1[2]}  b) {option2[2]}  c) {option3[2]}")
+
+    if day <= 31:
+        if not trivia.check_winners_updated(str(day - 1)):
+            winners = trivia.get_winners(day - 1)
+            trivia.log_winners(str(day - 1), winners, test)
+        else:
+            winners = trivia.get_past_winners(str(day - 1))
+        winners = [sublist[:1] for sublist in winners]
+        print(f"Winners: {winners}")
+
+        if winners:
+            if len(winners) >= 1:
+                ramadan_labels.winner_one_first.setText(winners[0][0].split(" ")[0].capitalize())
+                ramadan_labels.winner_one_last.setText(winners[0][0].split(" ")[-1].capitalize())
+                ramadan_labels.winner_two_first.setText("")
+                ramadan_labels.winner_two_last.setText("")
+                ramadan_labels.winner_three_first.setText("")
+                ramadan_labels.winner_three_last.setText("")
+
+            if len(winners) >= 2:
+                ramadan_labels.winner_two_first.setText(winners[1][0].split(" ")[0].capitalize())
+                ramadan_labels.winner_two_last.setText(winners[1][0].split(" ")[-1].capitalize())
+
+            if len(winners) >= 3:
+                ramadan_labels.winner_three_first.setText(winners[2][0].split(" ")[0].capitalize())
+                ramadan_labels.winner_three_last.setText(winners[2][0].split(" ")[-1].capitalize())
+        else:
+            ramadan_labels.winner_one_first.setText("No Winners")
+            ramadan_labels.winner_one_last.setText("Yesterday")
+            ramadan_labels.winner_two_first.setText("")
+            ramadan_labels.winner_two_last.setText("")
+            ramadan_labels.winner_three_first.setText("")
+            ramadan_labels.winner_three_last.setText("")
+
+    pixmap = QPixmap('trivia.png')
+    pixmap = pixmap.scaled(int(height_value * 0.1851851852), int(height_value * 0.1851851852), 
+                           Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    tq_image.clear()
+    tq_image.append(pixmap)
+    ramadan_labels.trivia_qr.setPixmap(tq_image[0])
+    print("\nStats so far:")
+    printAllStats()
+    print()
+
+def display_time(labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test):
+    """Main program loop that updates times"""
+    current_time = tm.strftime('%B %#d %#I:%M:%S %p') # calculate current time
+    today = datetime.now().timetuple().tm_yday # calculate current day of the year
+    hour_time = tm.strftime('%H:%M') # calculate current hour
+
+    tomorrow = today + 1 # calculate tomorrow
+    today_schedule = data.loc[data["Day_of_year"] == today] # read df and assign the row of today to today_schedule
+    tomorrow_schedule = data.loc[data["Day_of_year"] == tomorrow] # read df and assign the row of tomorrow to tomorrow_schedule
+    Fajr_Athan = today_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M') # assign data with column title Fajr_Athan to Fajr_Athan
+    Fajr_Iqama = today_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
+    Sunrise = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
+    # Sunrise_Iqama = (datetime.combine(dt.date.today(), today_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
+    Thuhr_Athan = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
+    Thuhr_Iqama = today_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
+    Asr_Athan = today_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
+    Asr_Iqama = today_schedule.iloc[0]["Asr_Iqama"].strftime('%#I:%M')
+    Maghrib_Athan = today_schedule.iloc[0]["Maghrib_Athan"].strftime('%#I:%M')
+    Maghrib_Iqama = today_schedule.iloc[0]["Maghrib_Iqama"].strftime('%#I:%M')
+    Ishaa_Athan = today_schedule.iloc[0]["Ishaa_Athan"].strftime('%#I:%M')
+    Ishaa_Iqama = today_schedule.iloc[0]["Ishaa_Iqama"].strftime('%#I:%M')
+
+    fajr_time = today_schedule.iloc[0]["Fajr_Athan"].strftime('%H:%M')
+    sunrise_time = today_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%H:%M')
+    thuhr_time = today_schedule.iloc[0]["Thuhr_Athan"].strftime('%H:%M')
+    asr_time = today_schedule.iloc[0]["Asr_Athan"].strftime('%H:%M')
+    maghrib_time = today_schedule.iloc[0]["Maghrib_Athan"].strftime('%H:%M')
+    isha_time = today_schedule.iloc[0]["Ishaa_Athan"].strftime('%H:%M')
+
+    Fajr_Athan2 = tomorrow_schedule.iloc[0]["Fajr_Athan"].strftime('%#I:%M')
+    Fajr_Iqama2 = tomorrow_schedule.iloc[0]["Fajr_Iqama"].strftime('%#I:%M')
+    Sunrise2 = tomorrow_schedule.iloc[0]["Shurooq_Sunrise"].strftime('%#I:%M')
+    # Sunrise_Iqama2 = (datetime.combine(dt.date.today(), tomorrow_schedule.iloc[0]["Shurooq_Sunrise"]) + dt.timedelta(minutes=15)).strftime('%#I:%M')
+    Thuhr_Athan2 = tomorrow_schedule.iloc[0]["Thuhr_Athan"].strftime('%#I:%M')
+    Thuhr_Iqama2 = tomorrow_schedule.iloc[0]["Thuhr_Iqama"].strftime('%#I:%M')
+    Asr_Athan2 = tomorrow_schedule.iloc[0]["Asr_Athan"].strftime('%#I:%M')
+    Asr_Iqama2 = tomorrow_schedule.iloc[0]["Asr_Iqama"].strftime('%#I:%M')
+    Maghrib_Athan2 = tomorrow_schedule.iloc[0]["Maghrib_Athan"].strftime('%#I:%M')
+    Maghrib_Iqama2 = tomorrow_schedule.iloc[0]["Maghrib_Iqama"].strftime('%#I:%M')
+    Ishaa_Athan2 = tomorrow_schedule.iloc[0]["Ishaa_Athan"].strftime('%#I:%M')
+    Ishaa_Iqama2 = tomorrow_schedule.iloc[0]["Ishaa_Iqama"].strftime('%#I:%M')
+
+    labels.today_date_label['text'] = today_schedule.iloc[0]["Day"] # to assign today in excel file to today_date_label text
+    labels.tomorrow_date_label['text'] = tomorrow_schedule.iloc[0]["Day"] #to assign today+1 in excel file to tomorrow_date_label text
+    labels.today_fajr_athan_label ['text'] = Fajr_Athan #to assign Fajir_Athan to today_fajr_athan_label text
+    labels.today_fajr_iqama_label ['text'] = Fajr_Iqama
+    labels.today_shurooq_athan_label ['text'] = Sunrise
+    # today_shurooq_iqama_label ['text'] = Sunrise_Iqama
+    labels.today_thuhr_athan_label ['text'] = Thuhr_Athan
+    labels.today_thuhr_iqama_label ['text'] = Thuhr_Iqama
+    labels.today_asr_athan_label ['text'] = Asr_Athan
+    labels.today_asr_iqama_label ['text'] = Asr_Iqama
+    labels.today_maghrib_athan_label ['text'] = Maghrib_Athan
+    labels.today_maghrib_iqama_label ['text'] = Maghrib_Iqama
+    labels.today_isha_athan_label ['text'] = Ishaa_Athan
+    labels.today_isha_iqama_label ['text'] = Ishaa_Iqama
+
+    labels.tomorrow_fajr_athan_label ['text'] = Fajr_Athan2
+    labels.tomorrow_fajr_iqama_label ['text'] = Fajr_Iqama2
+    labels.tomorrow_shurooq_athan_label ['text'] = Sunrise2
+    # tomorrow_shurooq_iqama_label ['text'] = Sunrise_Iqama2
+    labels.tomorrow_thuhr_athan_label ['text'] = Thuhr_Athan2
+    labels.tomorrow_thuhr_iqama_label ['text'] = Thuhr_Iqama2
+    labels.tomorrow_asr_athan_label ['text'] = Asr_Athan2
+    labels.tomorrow_asr_iqama_label ['text'] = Asr_Iqama2
+    labels.tomorrow_maghrib_athan_label ['text'] = Maghrib_Athan2
+    labels.tomorrow_maghrib_iqama_label ['text'] = Maghrib_Iqama2
+    labels.tomorrow_isha_athan_label ['text'] = Ishaa_Athan2
+    labels.tomorrow_isha_iqama_label ['text'] = Ishaa_Iqama2
+
+    next_prayer_color = rgb_to_hex((255, 0, 0))# to assign color to next prayer
+    pre_prayer_color = rgb_to_hex((255,255,255)) if ramadan else rgb_to_hex((0,0,0))# to assign color to next prayer
+    current_prayer_color = rgb_to_hex((0,200,0)) if ramadan else rgb_to_hex((0,50,0)) # to assign color to next prayer
+
+
+    # to highlight the next prayer time
+
+    if (":00" in hour_time):
+        if (updated is False):
+            update_photos(flyer_height)
+            updated = True
+    else:
+        updated = False
+
+    if(hour_time < fajr_time):
+        ramadan_updated = False
+
+        labels.today_isha_label['fg'] = pre_prayer_color
+        labels.today_isha_athan_label['fg'] = pre_prayer_color
+        labels.today_isha_iqama_label['fg'] = pre_prayer_color
+
+        labels.tomorrow_fajr_label['fg'] = pre_prayer_color
+        labels.tomorrow_fajr_athan_label['fg'] = pre_prayer_color
+        labels.tomorrow_fajr_iqama_label['fg'] = pre_prayer_color
+
+        labels.today_fajr_label['fg'] = next_prayer_color
+        labels.today_fajr_athan_label['fg'] = next_prayer_color
+        labels.today_fajr_iqama_label['fg'] = next_prayer_color
+
+    elif(hour_time >= fajr_time and hour_time < sunrise_time):
+        labels.today_fajr_label['fg'] = current_prayer_color
+        labels.today_fajr_athan_label['fg'] = current_prayer_color
+        labels.today_fajr_iqama_label['fg'] = current_prayer_color
+
+        labels.today_shurooq_label['fg'] = next_prayer_color
+        labels.today_shurooq_athan_label['fg'] = next_prayer_color
+        # today_shurooq_iqama_label['fg'] = next_prayer_color
+
+    elif(hour_time >= sunrise_time and hour_time < thuhr_time):
+        labels.today_fajr_label['fg'] = pre_prayer_color
+        labels.today_fajr_athan_label['fg'] = pre_prayer_color
+        labels.today_fajr_iqama_label['fg'] = pre_prayer_color
+
+        labels.today_shurooq_label['fg'] = current_prayer_color
+        labels.today_shurooq_athan_label['fg'] = current_prayer_color
+        # today_shurooq_iqama_label['fg'] = current_prayer_color
+
+        labels.today_thuhr_label['fg'] = next_prayer_color
+        labels.today_thuhr_athan_label['fg'] = next_prayer_color
+        labels.today_thuhr_iqama_label['fg'] = next_prayer_color
+
+    elif(hour_time >= thuhr_time and hour_time < asr_time):
+        labels.today_shurooq_label['fg'] = pre_prayer_color
+        labels.today_shurooq_athan_label['fg'] = pre_prayer_color
+        labels.today_shurooq_iqama_label['fg'] = pre_prayer_color
+        
+        labels.today_thuhr_label['fg'] = current_prayer_color
+        labels.today_thuhr_athan_label['fg'] = current_prayer_color
+        labels.today_thuhr_iqama_label['fg'] = current_prayer_color
+
+        labels.today_asr_label['fg'] = next_prayer_color
+        labels.today_asr_athan_label['fg'] = next_prayer_color
+        labels.today_asr_iqama_label['fg'] = next_prayer_color
+        
+    elif(hour_time >= asr_time and hour_time < maghrib_time):
+        labels.today_thuhr_label['fg'] = pre_prayer_color
+        labels.today_thuhr_athan_label['fg'] = pre_prayer_color
+        labels.today_thuhr_iqama_label['fg'] = pre_prayer_color
+        
+        labels.today_asr_label['fg'] = current_prayer_color
+        labels.today_asr_athan_label['fg'] = current_prayer_color
+        labels.today_asr_iqama_label['fg'] = current_prayer_color
+
+        labels.today_maghrib_label['fg'] = next_prayer_color
+        labels.today_maghrib_athan_label['fg'] = next_prayer_color
+        labels.today_maghrib_iqama_label['fg'] = next_prayer_color
+
+    elif(hour_time >= maghrib_time and hour_time < isha_time):
+        labels.today_asr_label['fg'] = pre_prayer_color
+        labels.today_asr_athan_label['fg'] = pre_prayer_color
+        labels.today_asr_iqama_label['fg'] = pre_prayer_color
+        
+        labels.today_maghrib_label['fg'] = current_prayer_color
+        labels.today_maghrib_athan_label['fg'] = current_prayer_color
+        labels.today_maghrib_iqama_label['fg'] = current_prayer_color
+
+        labels.today_isha_label['fg'] = next_prayer_color
+        labels.today_isha_athan_label['fg'] = next_prayer_color
+        labels.today_isha_iqama_label['fg'] = next_prayer_color
+        
+    elif(hour_time >= isha_time):
+        labels.today_maghrib_label['fg'] = pre_prayer_color
+        labels.today_maghrib_athan_label['fg'] = pre_prayer_color
+        labels.today_maghrib_iqama_label['fg'] = pre_prayer_color
+
+        labels.today_isha_label['fg'] = current_prayer_color
+        labels.today_isha_athan_label['fg'] = current_prayer_color
+        labels.today_isha_iqama_label['fg'] = current_prayer_color
+
+        labels.tomorrow_fajr_label['fg'] = next_prayer_color
+        labels.tomorrow_fajr_athan_label['fg'] = next_prayer_color
+        labels.tomorrow_fajr_iqama_label['fg'] = next_prayer_color
+
+        # If Ramadan this is where winner update logic will occur
+        if ramadan and not ramadan_updated and not test:
+            update_trivia(trivia.get_trivia_day(), ramadan_labels, height_value)
+            ramadan_updated = True
+
+    labels.clock_label ['text'] = current_time # to assign current time to clock label
+
+    # to flash the different announcements every 30 sec
+    global counter
+    global i    
+    
+    if (i >= len(photos) - 1):
+        i = 0
+
+    if(counter <Time and i< len(photos)):
+        flyer_photo_now = photos[i]
+        counter += 1
+    else:
+        flyer_photo_now = photos[i]
+        counter = 0
+        i+=1
+    
+    flyer['image'] = flyer_photo_now
+    
+    labels.clock_label.after(1000,display_time, labels, data, flyer, updated, ramadan, height_value, flyer_height, ramadan_labels, ramadan_updated, test) # rerun display_time() after 1sec
+
 def main():
     """run prayer screen"""
     parse = argparse.ArgumentParser(description="Prayer Times and Flyers")
@@ -987,13 +1100,10 @@ def main():
     parse.add_argument("-t", action="store_true", help="turns on test mode")
     args = parse.parse_args()
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(BASE_DIR, '..', 'config.json')
-    config_path = os.path.normpath(config_path)
-    with open(config_path, "r") as file:
+    with open(CONFIG_PATH, "r") as file:
         config = json.load(file)
 
-    # reading prayer schedule excel file (CFOF)
+    # reading prayer schedule excel file
     prayer_schedule_path = config["prayer_schedule"]
     if not os.path.exists(prayer_schedule_path):
         prayer_schedule_path = os.path.dirname(os.path.abspath(__file__)) + '/../prayer_schedule.xlsx'
