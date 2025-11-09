@@ -261,6 +261,8 @@ class PrayerTimesWindow(QMainWindow):
         clock_font = QFont('Helvetica', round(font_size * 1.3), QFont.Bold)  # Larger for clock
 
         #prayer times frame
+
+        print("")
         
         times_frame = QFrame(central_widget)
         border_color = self.tan if self.args.r else rgb_to_hex((200, 200, 200))  # Light gray border for normal mode
