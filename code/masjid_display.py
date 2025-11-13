@@ -261,9 +261,6 @@ class PrayerTimesWindow(QMainWindow):
         clock_font = QFont('Helvetica', round(font_size * 1.3), QFont.Bold)  # Larger for clock
 
         #prayer times frame
-
-        print("")
-        print("")
         
         times_frame = QFrame(central_widget)
         border_color = self.tan if self.args.r else rgb_to_hex((200, 200, 200))  # Light gray border for normal mode
@@ -288,6 +285,7 @@ class PrayerTimesWindow(QMainWindow):
 
         print("")
 
+        
         font_file = "quran_font.ttf"
         font_path = os.path.join(BASE_DIR, "..", "resources", font_file)
 
@@ -323,41 +321,50 @@ class PrayerTimesWindow(QMainWindow):
         ayah_layout.setContentsMargins(15, 15, 15, 15)
         ayah_layout.setSpacing(10)
         
-        #ayah (arabic)
+        #ayah (arabic) with dynamic font sizing
         arabic_font_size = round(25.5 * (height_value / 1080))
-
         arabic_font = QFont(font_family, arabic_font_size)
-        #arabic_font.setBold(True)
 
         self.ayah_arabic = QLabel(daily_ayah['arabic'], ayah_frame)
         self.ayah_arabic.setStyleSheet(f"background-color: transparent; color: white; border: none;")
         self.ayah_arabic.setFont(arabic_font)
         self.ayah_arabic.setAlignment(Qt.AlignCenter)
         self.ayah_arabic.setWordWrap(True)
-
         
-        #translation
-        translation_font = QFont('Helvetica', round(13 * (height_value/1080)))
+        # Adjust Arabic font size to fit
+        self.adjust_label_font_size(self.ayah_arabic, ayah_w, ayah_h * 0.4, arabic_font_size, font_family)
+        
+        #translation with dynamic font sizing
+        translation_font_size = round(13 * (height_value/1080))
+        translation_font = QFont('Helvetica', translation_font_size)
         self.ayah_translation = QLabel(daily_ayah['translation'], ayah_frame)
         self.ayah_translation.setStyleSheet(f"background-color: transparent; color: white; border: none;")
         self.ayah_translation.setFont(translation_font)
         self.ayah_translation.setAlignment(Qt.AlignCenter)
         self.ayah_translation.setWordWrap(True)
         
-        #reference
-        reference_font = QFont('Helvetica', round(12 * (height_value/1080)), QFont.StyleItalic)
+        # Adjust translation font size to fit
+        self.adjust_label_font_size(self.ayah_translation, ayah_w, ayah_h * 0.4, translation_font_size, 'Helvetica')
+        
+        #reference with dynamic font sizing
+        reference_font_size = round(12 * (height_value/1080))
+        reference_font = QFont('Helvetica', reference_font_size, QFont.StyleItalic)
         self.ayah_reference = QLabel(daily_ayah['reference'], ayah_frame)
         self.ayah_reference.setStyleSheet(f"background-color: transparent; color: white; border: none;")
         self.ayah_reference.setFont(reference_font)
         self.ayah_reference.setAlignment(Qt.AlignCenter)
+        
+        # Adjust reference font size to fit
+        self.adjust_label_font_size(self.ayah_reference, ayah_w, ayah_h * 0.2, reference_font_size, 'Helvetica', QFont.StyleItalic)
         
         ayah_layout.addWidget(self.ayah_arabic)
         ayah_layout.addWidget(self.ayah_translation)
         ayah_layout.addWidget(self.ayah_reference)
         ayah_layout.addStretch()
         
-        #store ayah 
+        #store ayah and previous ayahs list
         self.current_ayah_day = datetime.now().timetuple().tm_yday
+        self.previous_ayahs = []  # Track last 3 ayahs to avoid repeats
 
         #create labels
         self.labels = Labels(times_frame, bg_color, text_color, font, is_ramadan=self.args.r)
@@ -407,8 +414,8 @@ class PrayerTimesWindow(QMainWindow):
         frame_border_color = self.tan if self.args.r else rgb_to_hex((200, 200, 200))
         frame_style = f"background-color: rgba(255, 255, 255, 0.05); border: 1px solid {frame_border_color}; border-radius: 3px;"
         for frame in [self.today_fajr_frame, self.today_shurooq_frame, self.today_thuhr_frame, 
-                      self.today_asr_frame, self.today_maghrib_frame, self.today_isha_frame, 
-                      self.tomorrow_fajr_frame]:
+                  self.today_asr_frame, self.today_maghrib_frame, self.today_isha_frame, 
+                  self.tomorrow_fajr_frame]:
             frame.setStyleSheet(frame_style)
             frame_layout = QHBoxLayout(frame)
             frame_layout.setContentsMargins(5, 3, 5, 3)
@@ -419,14 +426,22 @@ class PrayerTimesWindow(QMainWindow):
         self.today_fajr_frame.layout().addWidget(self.labels.today_fajr_athan_label)
         self.today_fajr_frame.layout().addWidget(self.labels.today_fajr_iqama_label)
         
-        # For Shurooq, set fixed widths to match other rows
+        # For Shurooq, center the athan label across the athan/iqama area
         shurooq_layout = self.today_shurooq_frame.layout()
         shurooq_layout.addWidget(self.labels.today_shurooq_label)
-        shurooq_layout.addWidget(self.labels.today_shurooq_athan_label)
-        # Add empty space placeholder for iqama column to maintain alignment
-        empty_iqama = QLabel("", self.today_shurooq_frame)
-        empty_iqama.setStyleSheet("background-color: transparent; border: none;")
-        shurooq_layout.addWidget(empty_iqama)
+
+        # Ensure the athan label centers in the right-side area (athan + iqama)
+        right_widget = QWidget(self.today_shurooq_frame)
+        right_widget.setStyleSheet("background-color: transparent; border: none;")
+        right_layout = QHBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
+        right_layout.addStretch()
+        # center the athan label in the combined area
+        self.labels.today_shurooq_athan_label.setAlignment(Qt.AlignCenter)
+        right_layout.addWidget(self.labels.today_shurooq_athan_label)
+        right_layout.addStretch()
+        shurooq_layout.addWidget(right_widget)
         
         self.today_thuhr_frame.layout().addWidget(self.labels.today_thuhr_label)
         self.today_thuhr_frame.layout().addWidget(self.labels.today_thuhr_athan_label)
@@ -496,11 +511,17 @@ class PrayerTimesWindow(QMainWindow):
         layout_sh.setContentsMargins(5, 3, 5, 3)
         layout_sh.setSpacing(10)
         layout_sh.addWidget(self.labels.tomorrow_shurooq_label)
-        layout_sh.addWidget(self.labels.tomorrow_shurooq_athan_label)
-        # Add empty space placeholder for iqama column to maintain alignment
-        empty_iqama_tom = QLabel("", tomorrow_shurooq_frame)
-        empty_iqama_tom.setStyleSheet("background-color: transparent; border: none;")
-        layout_sh.addWidget(empty_iqama_tom)
+        # Use the same centering approach for tomorrow's shurooq athan
+        right_widget_tom = QWidget(tomorrow_shurooq_frame)
+        right_widget_tom.setStyleSheet("background-color: transparent; border: none;")
+        right_layout_tom = QHBoxLayout(right_widget_tom)
+        right_layout_tom.setContentsMargins(0, 0, 0, 0)
+        right_layout_tom.setSpacing(0)
+        right_layout_tom.addStretch()
+        self.labels.tomorrow_shurooq_athan_label.setAlignment(Qt.AlignCenter)
+        right_layout_tom.addWidget(self.labels.tomorrow_shurooq_athan_label)
+        right_layout_tom.addStretch()
+        layout_sh.addWidget(right_widget_tom)
         grid.addWidget(tomorrow_shurooq_frame, 14, 0)
         
         tomorrow_thuhr_frame = QFrame(times_frame)
@@ -616,7 +637,7 @@ class PrayerTimesWindow(QMainWindow):
                                 website_pixmap.height())
 
 
-        #flyer
+         #flyer
 
         flyer_height = height_value if not self.args.r else int(height_value/1.5)
         update_photos(flyer_height)
@@ -709,10 +730,10 @@ class PrayerTimesWindow(QMainWindow):
                 int(height_value * winners_h_ratio)
             )
             
-            questions_w_ratio = 0.28
-            questions_h_ratio = 0.20
-            questions_x_ratio = 0.555
-            questions_y_ratio = 0.75
+            questions_w_ratio = 0.35  # Increased width for better text wrapping
+            questions_h_ratio = 0.25  # Increased height for text wrapping
+            questions_x_ratio = 0.52  # Adjusted position
+            questions_y_ratio = 0.70
             
             questions_frame.setGeometry(
                 int(width_value * questions_x_ratio),
@@ -737,7 +758,7 @@ class PrayerTimesWindow(QMainWindow):
             self.ramadan_labels.trivia_qr.setStyleSheet("background: transparent; border: none;")
             self.ramadan_labels.trivia_qr.setGeometry(
                 int(width_value / 2 - qr_size / 2)+50,  # Center horizontally
-                int(height_value / 2 - qr_size / 2)+42,  # Center vertically
+                int(height_value / 2 - qr_size / 2)+40,  # Center vertically
                 qr_size,
                 qr_size
             )
@@ -755,6 +776,55 @@ class PrayerTimesWindow(QMainWindow):
         testDay += 1
         screen = QApplication.primaryScreen().geometry()
         update_trivia(testDay, self.ramadan_labels, screen.height(), test=True)
+    
+    def adjust_label_font_size(self, label, max_width, max_height, initial_size, font_family, font_style=None):
+        """Dynamically adjust label font size to fit within dimensions"""
+        from PyQt5.QtCore import QRect
+        
+        # Start with initial font size
+        current_size = initial_size
+        min_size = 8  # Minimum readable font size
+        
+        # Create font with appropriate style
+        if font_style:
+            font = QFont(font_family, current_size, font_style)
+        else:
+            font = QFont(font_family, current_size)
+        
+        label.setFont(font)
+        
+        # Check if text fits, reduce size if needed
+        while current_size > min_size:
+            if font_style:
+                font = QFont(font_family, current_size, font_style)
+            else:
+                font = QFont(font_family, current_size)
+            
+            label.setFont(font)
+            
+            # Calculate required size for text
+            metrics = label.fontMetrics()
+            text_rect = metrics.boundingRect(
+                QRect(0, 0, int(max_width - 30), int(max_height)),  # Account for margins
+                Qt.AlignCenter | Qt.TextWordWrap,
+                label.text()
+            )
+            
+            # If text fits within bounds, we're done
+            if text_rect.height() <= max_height - 20:  # Account for padding
+                break
+            
+            # Otherwise, reduce font size
+            current_size -= 1
+        
+        # Apply final font
+        if font_style:
+            final_font = QFont(font_family, current_size, font_style)
+        else:
+            final_font = QFont(font_family, current_size)
+        label.setFont(final_font)
+        
+        print(f"Adjusted {font_family} font from {initial_size} to {current_size}")
     
     def keyPressEvent(self, event):
         """key press handler"""
